@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using DurableFunctionOrchestration.Models;
+﻿using DurableFunctionOrchestration.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -25,6 +24,9 @@ namespace DurableFunctionOrchestration.Activities
             var request = GetReservationRequest();
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            // test retrys
+            // content.Headers.Add("x-custom-status", "429");
 
             var response = await _httpClient.PostAsync("/api/reservation/hotel", content);
             if (!response.IsSuccessStatusCode)
