@@ -1,8 +1,6 @@
 using DurableFunctionOrchestration.Activities;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask;
-using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
 
 namespace FunctionApp1
@@ -22,8 +20,27 @@ namespace FunctionApp1
 
             logger.LogInformation(userId);
 
-            outputs.Add(await context.CallActivityAsync<string>(nameof(HotelFunctions.RegistrationAsync), userId));
+            TaskOptions retryOptions = TaskOptions.FromRetryHandler(retryContext =>
+            {
+                // Don't retry anything that derives from ApplicationException
+                if(retryContext.LastFailure.IsCausedBy<HotelFunctionException>())
+                {
+                    return false;
+                }
 
+                // Quit after N attempts
+                return retryContext.LastAttemptNumber < 3;
+            });
+
+            try
+            {
+                outputs.Add(await context.CallActivityAsync<string>(nameof(HotelFunctions.RegistrationAsync), userId, retryOptions));
+            }
+            catch(TaskFailedException e)
+            {
+                logger.LogError("Error Occured", e);
+                Console.Out.WriteLine("error");
+            }
             // TODO: Create Flight 
             // TODO: Trip Confirmation
 
