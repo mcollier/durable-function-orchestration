@@ -20,14 +20,35 @@ namespace FunctionApp1
 
             logger.LogInformation(userId);
 
-            var hotel = await context.CallActivityAsync<HotelReservationRequest>(nameof(HotelFunctions.RegistrationAsync), userId);
-            var flight = await context.CallActivityAsync<FlightReservationRequest>(nameof(FlightFunctions.FlightRegistrationAsync), userId);
-            var confirmationRequest = GetConfirmationRequest(hotel, flight);
+            TaskOptions retryOptions = TaskOptions.FromRetryHandler(retryContext =>
+            {
+                // Don't retry anything that derives from ApplicationException
+                if(retryContext.LastFailure.IsCausedBy<ApplicationException>())
+                {
+                    return false;
+                }
 
-            var confirmationResult = await context.CallActivityAsync<string>(
-                nameof(ConfirmationFunction.ConfirmationAsync), confirmationRequest);
+                // Quit after N attempts
+                return retryContext.LastAttemptNumber < 3;
+            });
 
-            return confirmationResult;
+            try
+            { 
+                var hotel = await context.CallActivityAsync<HotelReservationRequest>(nameof(HotelFunctions.RegistrationAsync), userId, retryOptions);
+                var flight = await context.CallActivityAsync<FlightReservationRequest>(nameof(FlightFunctions.FlightRegistrationAsync), userId, retryOptions);
+                var confirmationRequest = GetConfirmationRequest(hotel, flight);
+
+                var confirmationResult = await context.CallActivityAsync<string>(
+                    nameof(ConfirmationFunction.ConfirmationAsync), confirmationRequest, retryOptions);
+
+                return confirmationResult;
+            }
+            catch(TaskFailedException e)
+            {
+                logger.LogError("Task Failed", e);
+
+                return "FAIL";
+            }
         }
 
         private static ConfirmationRequest GetConfirmationRequest(
