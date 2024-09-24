@@ -25,6 +25,9 @@ namespace DurableFunctionOrchestration.Activities
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
+            // test retrys
+            // content.Headers.Add("x-custom-status", "429");
+
             var response = await _httpClient.PostAsync("/api/reservation/hotel", content);
 
             if (!response.IsSuccessStatusCode)
