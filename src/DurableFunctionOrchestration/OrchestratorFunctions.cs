@@ -1,4 +1,5 @@
 using DurableFunctionOrchestration.Activities;
+using DurableTask.Core;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
@@ -23,7 +24,7 @@ namespace FunctionApp1
             TaskOptions retryOptions = TaskOptions.FromRetryHandler(retryContext =>
             {
                 // Don't retry anything that derives from ApplicationException
-                if(retryContext.LastFailure.IsCausedBy<HotelFunctionException>())
+                if(retryContext.LastFailure.IsCausedBy<ApplicationException>())
                 {
                     return false;
                 }
@@ -38,20 +39,16 @@ namespace FunctionApp1
             }
             catch(TaskFailedException e)
             {
-                logger.LogError("Error Occured", e);
-                Console.Out.WriteLine("error");
+                logger.LogError("Something went wrong", e);
+                // Case when the retry handler returns false...
             }
+            
             // TODO: Create Flight 
             // TODO: Trip Confirmation
-
-
 
             // returns ["Hello Tokyo!", "Hello Seattle!", "Hello London!"]
             return outputs;
         }
-
-       
-
         
     }
 }

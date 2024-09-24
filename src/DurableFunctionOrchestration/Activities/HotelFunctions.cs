@@ -26,13 +26,13 @@ namespace DurableFunctionOrchestration.Activities
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            throw new HotelFunctionException("Bad mojo");
-
             var response = await _httpClient.PostAsync("/api/reservation/hotel", content);
+
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Failed to create hotel registration for user {userId}.", userId);
-                return false;
+
+                throw new HotelFunctionException("Failed to create hotel registration");
             }
 
             logger.LogInformation("Hotel registration created for user {userId}.", userId);
