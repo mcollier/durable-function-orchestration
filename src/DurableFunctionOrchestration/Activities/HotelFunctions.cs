@@ -29,10 +29,12 @@ namespace DurableFunctionOrchestration.Activities
             // content.Headers.Add("x-custom-status", "429");
 
             var response = await _httpClient.PostAsync("/api/reservation/hotel", content);
+
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Failed to create hotel registration for user {userId}.", userId);
-                return new();
+
+                throw new HotelFunctionException("Failed to create hotel registration");
             }
 
             logger.LogInformation("Hotel registration created for user {userId}.", userId);

@@ -4,9 +4,12 @@ using Microsoft.Extensions.Hosting;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Extensions.Http;
+using DurableFunctionsMonitor.DotNetIsolated;
 
 var host = new HostBuilder()
-    .ConfigureFunctionsWebApplication()
+    .ConfigureFunctionsWebApplication((hostBuilderContext, workerAppBuilder) => {
+        workerAppBuilder.UseDurableFunctionsMonitor();
+    })
     .ConfigureServices(services =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();
