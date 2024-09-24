@@ -1,0 +1,5 @@
+@baseurl=http://localhost:7284
+
+### Get all flights
+GET {{baseurl}}/api/HttpStart?userId=jelosegui
+Content-Type: application/json
