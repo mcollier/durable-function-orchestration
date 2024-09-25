@@ -37,7 +37,7 @@ namespace DurableFunctionOrchestration.Activities
             return request;
         }
 
-        private FlightReservationRequest GetReservationRequest()
+        private static FlightReservationRequest GetReservationRequest()
         {
             // Create a ramdom FlightReservationRequest
             var random = new Random();

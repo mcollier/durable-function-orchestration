@@ -28,17 +28,14 @@ namespace DurableFunctionOrchestration.Activities
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogError("Failed to get confirmation.");
-                return response.Content.ToString();
+                return response.Content?.ToString() ?? "Failed to get confirmation.";
             }
 
             logger.LogInformation("Hotel and Flight have been confirmed");
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var deserializedContent = JsonSerializer.Deserialize<string>(responseContent);
-
-            return deserializedContent;
+            return deserializedContent ?? "Failed to get confirmation.";
         }
-
-
     }
 }
