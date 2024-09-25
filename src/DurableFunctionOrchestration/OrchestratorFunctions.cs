@@ -8,11 +8,11 @@ namespace FunctionApp1
 {
     public static class OrchestratorFunctions
     {
-        [Function(nameof(OrchestratorFunctions))]
+        [Function(nameof(RunOrchestrator))]
         public static async Task<string> RunOrchestrator(
             [OrchestrationTrigger] TaskOrchestrationContext context)
         {
-            ILogger logger = context.CreateReplaySafeLogger(nameof(OrchestratorFunctions));
+            ILogger logger = context.CreateReplaySafeLogger(nameof(RunOrchestrator));
             logger.LogInformation("Starting the orchestrator.");
 
             string? userId = context.GetInput<string>();
@@ -37,10 +37,23 @@ namespace FunctionApp1
                 var flight = await context.CallActivityAsync<FlightReservationRequest>(nameof(FlightFunctions.FlightRegistrationAsync), userId, retryOptions);
                 var confirmationRequest = GetConfirmationRequest(hotel, flight);
 
-                var confirmationResult = await context.CallActivityAsync<string>(
-                    nameof(ConfirmationFunctions.ConfirmationAsync), confirmationRequest, retryOptions);
 
-                return confirmationResult;
+                var confirmationState = await context.CallActivityAsync<string>(
+                    nameof(ConfirmationFunctions.ConfirmationAsync), confirmationRequest);
+                if (confirmationState.Contains("fail", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.SetCustomStatus("Pending approval for cancellation");
+                    var approvalStatus = await context.WaitForExternalEvent<ApprovalRequest>("Approval");
+                    context.SetCustomStatus(null);
+                    if (approvalStatus.Approved)
+                    {
+                        return "The flight was cancelled";
+                    }
+                    return "The flight was NOT cancelled";
+                }
+
+                return confirmationState;
+
             }
             catch (TaskFailedException e)
             {

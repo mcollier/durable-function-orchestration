@@ -35,6 +35,13 @@ namespace DurableFunctionOrchestration.Activities
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var deserializedContent = JsonSerializer.Deserialize<string>(responseContent);
+
+            if (new Random().NextDouble() <= 0.7)
+            {
+                return "Failure";
+            }
+
+            return deserializedContent;
             return deserializedContent ?? "Failed to get confirmation.";
         }
     }
