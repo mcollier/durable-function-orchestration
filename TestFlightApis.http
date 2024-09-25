@@ -1,5 +1,25 @@
 @baseurl=http://localhost:7284
 
-### Get all flights
-GET {{baseurl}}/api/HttpStart?userId=jelosegui
+# Book the trip
+GET {{baseurl}}/api/HttpStart?userId=me
 Content-Type: application/json
+
+###
+
+@instanceId=936b278df8124f5b9671828dbfab0d46
+@approved=true
+
+# CheckStatus
+GET {{baseurl}}/api/GetStatus?instanceid={{instanceId}}
+
+###
+
+
+# Approve
+POST {{baseurl}}/api/Approve
+Content-type: application/json
+
+{
+  "Approved": "{{approved}}",
+  "InstanceId": "{{instanceId}}"
+}
