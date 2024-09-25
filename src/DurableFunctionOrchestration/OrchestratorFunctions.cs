@@ -1,6 +1,5 @@
 using DurableFunctionOrchestration.Activities;
 using DurableFunctionOrchestration.Models;
-using DurableFunctionOrchestration.Models.DurableFunctionOrchestration.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
@@ -20,28 +19,48 @@ namespace FunctionApp1
 
             logger.LogInformation(userId);
 
-            var hotel = await context.CallActivityAsync<HotelReservationRequest>(nameof(HotelFunctions.RegistrationAsync), userId);
-
-            var flight = await context.CallActivityAsync<FlightReservationRequest>(nameof(FlightFunctions.FlightRegistrationAsync), userId);
-            var confirmationRequest = GetConfirmationRequest(hotel, flight);
-
-
-            var confirmationState = await context.CallActivityAsync<string>(
-                    nameof(ConfirmationFunction.ConfirmationAsync), confirmationRequest);
-            if (confirmationState.Contains("fail", StringComparison.OrdinalIgnoreCase))
+            TaskOptions retryOptions = TaskOptions.FromRetryHandler(retryContext =>
             {
-                context.SetCustomStatus("Pending approval for cancellation");
-                var approvalStatus = await context.WaitForExternalEvent<ApprovalRequest>("Approval");
-                context.SetCustomStatus(null);
-                if (approvalStatus.Approved)
+                // Don't retry anything that derives from ApplicationException
+                if (retryContext.LastFailure.IsCausedBy<ApplicationException>())
                 {
-                    return "The flight was cancelled";
+                    return false;
                 }
-                return "The flight was NOT cancelled";
+
+                // Quit after N attempts
+                return retryContext.LastAttemptNumber < 3;
+            });
+
+            try
+            {
+                var hotel = await context.CallActivityAsync<HotelReservationRequest>(nameof(HotelFunctions.RegistrationAsync), userId, retryOptions);
+                var flight = await context.CallActivityAsync<FlightReservationRequest>(nameof(FlightFunctions.FlightRegistrationAsync), userId, retryOptions);
+                var confirmationRequest = GetConfirmationRequest(hotel, flight);
+
+
+                var confirmationState = await context.CallActivityAsync<string>(
+                    nameof(ConfirmationFunctions.ConfirmationAsync), confirmationRequest);
+                if (confirmationState.Contains("fail", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.SetCustomStatus("Pending approval for cancellation");
+                    var approvalStatus = await context.WaitForExternalEvent<ApprovalRequest>("Approval");
+                    context.SetCustomStatus(null);
+                    if (approvalStatus.Approved)
+                    {
+                        return "The flight was cancelled";
+                    }
+                    return "The flight was NOT cancelled";
+                }
+
+                return confirmationState;
+
             }
+            catch (TaskFailedException e)
+            {
+                logger.LogError("Task Failed", e);
 
-            return confirmationState;
-
+                return "FAIL";
+            }
         }
 
         private static ConfirmationRequest GetConfirmationRequest(

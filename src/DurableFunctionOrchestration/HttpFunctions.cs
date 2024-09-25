@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace FunctionApp1
 {
-    internal class HttpFunctions
+    public class HttpFunctions
     {
         [Function(nameof(HttpStart))]
         public static async Task<HttpResponseData> HttpStart(
