@@ -3,6 +3,8 @@ on:
   push:
     branches:
     - main
+  workflow_dispatch:
+
 env:
   AZURE_FUNCTIONAPP_NAME: ngt2024
   AZURE_FUNCTIONAPP_PACKAGE_PATH: src\DurableFunctionOrchestration\published
