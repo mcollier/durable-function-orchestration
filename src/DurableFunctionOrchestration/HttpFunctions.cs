@@ -1,11 +1,11 @@
-﻿using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
 
 namespace FunctionApp1
 {
-    internal class HttpFunctions
+    public class HttpFunctions
     {
         [Function(nameof(HttpStart))]
         public static async Task<HttpResponseData> HttpStart(

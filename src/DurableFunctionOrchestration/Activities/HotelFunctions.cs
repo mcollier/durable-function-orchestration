@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace DurableFunctionOrchestration.Activities
 {
-    internal class HotelFunctions
+    public class HotelFunctions
     {
         private static HttpClient _httpClient = null!;
 
@@ -18,7 +18,7 @@ namespace DurableFunctionOrchestration.Activities
         [Function(nameof(RegistrationAsync))]
         public async Task<HotelReservationRequest> RegistrationAsync([ActivityTrigger] string userId, FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger(nameof(RegistrationAsync));
+            var logger = executionContext.GetLogger<HotelFunctions>();
             logger.LogInformation("Creating hotel registration for user {userId}.", userId);
 
             var request = GetReservationRequest();

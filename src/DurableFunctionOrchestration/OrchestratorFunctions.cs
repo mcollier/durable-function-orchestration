@@ -1,6 +1,5 @@
 using DurableFunctionOrchestration.Activities;
 using DurableFunctionOrchestration.Models;
-using DurableFunctionOrchestration.Models.DurableFunctionOrchestration.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
@@ -23,7 +22,7 @@ namespace FunctionApp1
             TaskOptions retryOptions = TaskOptions.FromRetryHandler(retryContext =>
             {
                 // Don't retry anything that derives from ApplicationException
-                if(retryContext.LastFailure.IsCausedBy<ApplicationException>())
+                if (retryContext.LastFailure.IsCausedBy<ApplicationException>())
                 {
                     return false;
                 }
@@ -33,17 +32,17 @@ namespace FunctionApp1
             });
 
             try
-            { 
+            {
                 var hotel = await context.CallActivityAsync<HotelReservationRequest>(nameof(HotelFunctions.RegistrationAsync), userId, retryOptions);
                 var flight = await context.CallActivityAsync<FlightReservationRequest>(nameof(FlightFunctions.FlightRegistrationAsync), userId, retryOptions);
                 var confirmationRequest = GetConfirmationRequest(hotel, flight);
 
                 var confirmationResult = await context.CallActivityAsync<string>(
-                    nameof(ConfirmationFunction.ConfirmationAsync), confirmationRequest, retryOptions);
+                    nameof(ConfirmationFunctions.ConfirmationAsync), confirmationRequest, retryOptions);
 
                 return confirmationResult;
             }
-            catch(TaskFailedException e)
+            catch (TaskFailedException e)
             {
                 logger.LogError("Task Failed", e);
 
