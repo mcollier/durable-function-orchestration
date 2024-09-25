@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace DurableFunctionOrchestration.Activities
 {
-    internal class FlightFunctions
+    public class FlightFunctions
     {
         private static HttpClient _httpClient = null!;
 
@@ -18,7 +18,7 @@ namespace DurableFunctionOrchestration.Activities
         [Function(nameof(FlightRegistrationAsync))]
         public async Task<FlightReservationRequest> FlightRegistrationAsync([ActivityTrigger] string userId, FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger(nameof(FlightRegistrationAsync));
+            ILogger logger = executionContext.GetLogger<FlightFunctions>();
             logger.LogInformation("Creating flight registration for user {userId}.", userId);
 
             var request = GetReservationRequest();
@@ -37,7 +37,7 @@ namespace DurableFunctionOrchestration.Activities
             return request;
         }
 
-        private FlightReservationRequest GetReservationRequest()
+        private static FlightReservationRequest GetReservationRequest()
         {
             // Create a ramdom FlightReservationRequest
             var random = new Random();
