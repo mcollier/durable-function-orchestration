@@ -32,23 +32,34 @@ namespace FunctionApp1
                 return retryContext.LastAttemptNumber < 3;
             });
 
-            try
-            { 
-                var hotel = await context.CallActivityAsync<HotelReservationRequest>(nameof(HotelFunctions.RegistrationAsync), userId, retryOptions);
-                var flight = await context.CallActivityAsync<FlightReservationRequest>(nameof(FlightFunctions.FlightRegistrationAsync), userId, retryOptions);
-                var confirmationRequest = GetConfirmationRequest(hotel, flight);
-
-                var confirmationResult = await context.CallActivityAsync<string>(
-                    nameof(ConfirmationFunction.ConfirmationAsync), confirmationRequest, retryOptions);
-
-                return confirmationResult;
+            var hotelReservationResult = await context.CallActivityAsync<HotelReservationResult>(nameof(HotelFunctions.RegistrationAsync), userId);
+            
+            if(hotelReservationResult.Status == "FAIL") {
+                return "FAIL";
             }
-            catch(TaskFailedException e)
-            {
-                logger.LogError("Task Failed", e);
+
+            var flightReservationResult = await context.CallActivityAsync<FlightReservationResult>(nameof(FlightFunctions.FlightRegistrationAsync), userId);
+            
+            if(flightReservationResult.Status == "FAIL") {
+                var cancelResponse = await context.CallActivityAsync<string>(nameof(HotelFunctions.CancelHotelReservationAsync), hotelReservationResult.Reservation?.Id);
 
                 return "FAIL";
             }
+
+            var confirmationRequest = GetConfirmationRequest(hotelReservationResult.Reservation, flightReservationResult.Reservation);
+
+            var confirmationResult = await context.CallActivityAsync<string>(
+                nameof(ConfirmationFunction.ConfirmationAsync), confirmationRequest);
+
+            if(confirmationResult == "FAIL")
+            {
+                var flightCancelResponse = await context.CallActivityAsync<string>(nameof(FlightFunctions.CancelFlightReservationAsync), flightReservationResult.Reservation?.Id);
+                var hotelCancelResponse = await context.CallActivityAsync<string>(nameof(HotelFunctions.CancelHotelReservationAsync), hotelReservationResult.Reservation?.Id);
+                
+                return "FAIL";
+            }
+
+            return confirmationResult;
         }
 
         private static ConfirmationRequest GetConfirmationRequest(
