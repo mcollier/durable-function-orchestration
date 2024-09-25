@@ -1,6 +1,6 @@
 namespace DurableFunctionOrchestration.Models
 {
-    internal class HotelReservationResult
+    public class HotelReservationResult
     {
         public HotelReservationRequest? Reservation { get; set; }
 

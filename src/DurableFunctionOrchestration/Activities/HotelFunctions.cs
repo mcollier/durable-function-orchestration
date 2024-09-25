@@ -9,7 +9,7 @@ using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext
 
 namespace DurableFunctionOrchestration.Activities
 {
-    internal class HotelFunctions
+    public class HotelFunctions
     {
         private static HttpClient _httpClient = null!;
 
@@ -21,7 +21,7 @@ namespace DurableFunctionOrchestration.Activities
         [Function(nameof(RegistrationAsync))]
         public async Task<HotelReservationResult> RegistrationAsync([ActivityTrigger] string userId, FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger(nameof(RegistrationAsync));
+            var logger = executionContext.GetLogger<HotelFunctions>();
             logger.LogInformation("Creating hotel registration for user {userId}.", userId);
 
             var reservationRequest = GetReservationRequest();
@@ -91,7 +91,7 @@ namespace DurableFunctionOrchestration.Activities
             }
         }
 
-        private HotelReservationRequest GetReservationRequest()
+        private static HotelReservationRequest GetReservationRequest()
         {
             // Create a ramdom HotelReservationRequest
             var random = new Random();

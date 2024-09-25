@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace DurableFunctionOrchestration.Activities
 {
-    internal class FlightFunctions
+    public class FlightFunctions
     {
         private static HttpClient _httpClient = null!;
 
@@ -19,7 +19,7 @@ namespace DurableFunctionOrchestration.Activities
         [Function(nameof(FlightRegistrationAsync))]
         public async Task<FlightReservationResult> FlightRegistrationAsync([ActivityTrigger] string userId, FunctionContext executionContext)
         {
-            ILogger logger = executionContext.GetLogger(nameof(FlightRegistrationAsync));
+            ILogger logger = executionContext.GetLogger<FlightFunctions>();
             logger.LogInformation("Creating flight registration for user {userId}.", userId);
 
             var request = GetReservationRequest();
@@ -27,11 +27,6 @@ namespace DurableFunctionOrchestration.Activities
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync("/api/reservation/flight", content);
-
-            return new FlightReservationResult
-            {
-                Status = "FAIL"
-            };
 
             switch (response.StatusCode) {
                 case HttpStatusCode.Created:
@@ -94,7 +89,7 @@ namespace DurableFunctionOrchestration.Activities
             }
         }
 
-        private FlightReservationRequest GetReservationRequest()
+        private static FlightReservationRequest GetReservationRequest()
         {
             // Create a ramdom FlightReservationRequest
             var random = new Random();
