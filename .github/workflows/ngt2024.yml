@@ -5,49 +5,45 @@ on:
     - main
   workflow_dispatch:
 
+permissions:
+ id-token: write
+ contents: read
+
 env:
   AZURE_FUNCTIONAPP_NAME: ngt2024
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: src\DurableFunctionOrchestration\published
+  # AZURE_FUNCTIONAPP_PACKAGE_PATH: src\DurableFunctionOrchestration\published
   CONFIGURATION: Release
-  DOTNET_CORE_VERSION: 8.0.x
+  DOTNET_VERSION: 8.0.x
   WORKING_DIRECTORY: src\DurableFunctionOrchestration
   DOTNET_CORE_VERSION_INPROC: 6.0.x
 jobs:
-  build:
+  build-and-deploy:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET SDK
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+    - name: 'Checkout GitHub Action' 
+      uses: actions/checkout@main
+  
+    - name: Setup .NET ${{ env.DOTNET_VERSION }} SDK
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
-    # - name: Setup .NET Core (for inproc extensions)
-    #   uses: actions/setup-dotnet@v1
-    #   with:
-    #     dotnet-version: ${{ env.DOTNET_CORE_VERSION_INPROC }}
-    - name: Restore
-      run: dotnet restore "${{ env.WORKING_DIRECTORY }}"
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
     - name: Build
-      run: dotnet build "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore
-    - name: Publish
-      run: dotnet publish "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-build --output "${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}"
-    - name: Publish Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: functionapp
-        path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    steps:
-    - name: Download artifact from build job
-      uses: actions/download-artifact@v3
-      with:
-        name: functionapp
-        path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-    - name: Deploy to Azure Function App
+      run: dotnet build --configuration ${{ env.CONFIGURATION }} --output ./output
+      working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    - name: 'Publish Azure Function'
       uses: Azure/functions-action@v1
+      id: fa
       with:
         app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-        publish-profile: ${{ secrets.ngt2024_6750 }}
         package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+
+        
