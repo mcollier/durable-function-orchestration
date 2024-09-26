@@ -43,3 +43,7 @@ jobs:
         with:
           app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
           package: ${{ env.WORKING_DIRECTORY }}/output
+
+      - name: Azure Logout
+        run: |
+          az logout
