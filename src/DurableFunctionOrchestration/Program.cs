@@ -4,11 +4,11 @@ using Microsoft.Extensions.Hosting;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Extensions.Http;
-//using DurableFunctionsMonitor.DotNetIsolated;
+using DurableFunctionsMonitor.DotNetIsolated;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication((hostBuilderContext, workerAppBuilder) => {
-        //workerAppBuilder.UseDurableFunctionsMonitor();
+        workerAppBuilder.UseDurableFunctionsMonitor();
     })
     .ConfigureServices(services =>
     {
@@ -25,7 +25,7 @@ var host = new HostBuilder()
         //   .AddStandardResilienceHandler(); is another option however the policy handler was done using Polly directly.
         services.AddHttpClient("ReservationClient", client =>
         {
-            client.BaseAddress = new Uri("https://web-travel-api-eastus.azurewebsites.net/");
+            client.BaseAddress = new Uri(travelReservationBaseUri);
         })
         .AddPolicyHandler(GetRetryPolicy());
     })
