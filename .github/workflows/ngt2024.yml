@@ -10,8 +10,6 @@ permissions:
  contents: read
 
 env:
-  AZURE_FUNCTIONAPP_NAME: ngt2024
-  # AZURE_FUNCTIONAPP_PACKAGE_PATH: src\DurableFunctionOrchestration\published
   CONFIGURATION: Release
   DOTNET_VERSION: 8.0.x
   WORKING_DIRECTORY: src\DurableFunctionOrchestration
@@ -43,7 +41,7 @@ jobs:
       uses: Azure/functions-action@v1
       id: fa
       with:
-        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
         package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
 
         
