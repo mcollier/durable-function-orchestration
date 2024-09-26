@@ -4,19 +4,25 @@ using Microsoft.Extensions.Hosting;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Extensions.Http;
-using DurableFunctionsMonitor.DotNetIsolated;
+//using DurableFunctionsMonitor.DotNetIsolated;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication((hostBuilderContext, workerAppBuilder) => {
-        workerAppBuilder.UseDurableFunctionsMonitor();
+        //workerAppBuilder.UseDurableFunctionsMonitor();
     })
     .ConfigureServices(services =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        // Configures a named Reservaton APIS http . 
-        //   .AddStandardResilienceHandler(); is another option however the policy handler was done usine Polly directly.
+        var travelReservationBaseUri = Environment.GetEnvironmentVariable("TRAVEL_RESERVATION_BASE_URI");
+        if (string.IsNullOrEmpty(travelReservationBaseUri))
+        {
+            throw new InvalidOperationException("Environment variable TRAVEL_RESERVATION_BASE_URI is not set.");
+        }
+
+        // Configures a named Reservation APIS http . 
+        //   .AddStandardResilienceHandler(); is another option however the policy handler was done using Polly directly.
         services.AddHttpClient("ReservationClient", client =>
         {
             client.BaseAddress = new Uri("https://web-travel-api-eastus.azurewebsites.net/");
