@@ -34,7 +34,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Build
-        run: dotnet build --configuration ${{ env.CONFIGURATION }} --output ./output
+        run: dotnet build --configuration ${{ env.CONFIGURATION }} --output .\output
         working-directory: ${{ env.WORKING_DIRECTORY }}
 
       - name: "Publish Azure Function"
@@ -42,7 +42,7 @@ jobs:
         id: fa
         with:
           app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
-          package: ${{ env.WORKING_DIRECTORY }}/output
+          package: ${{ env.WORKING_DIRECTORY }}\output
 
       - name: Azure Logout
         run: |
