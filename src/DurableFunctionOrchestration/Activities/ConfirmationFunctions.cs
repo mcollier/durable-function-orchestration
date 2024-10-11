@@ -41,7 +41,6 @@ namespace DurableFunctionOrchestration.Activities
                 return "Failure";
             }
 
-            return deserializedContent;
             return deserializedContent ?? "Failed to get confirmation.";
         }
     }

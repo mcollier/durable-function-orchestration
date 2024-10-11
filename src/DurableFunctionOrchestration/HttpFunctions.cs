@@ -43,19 +43,28 @@ namespace FunctionApp1
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var data = JsonConvert.DeserializeObject<ApprovalRequest>(requestBody);
+
             if (data == null)
             {
                 return new BadRequestObjectResult("Could not deserialize the request");
             }
+
+            if (string.IsNullOrWhiteSpace(data.InstanceId))
+            {
+                return new BadRequestObjectResult("InstanceId is null or empty");
+            }
+
             var instance = await client.GetInstanceAsync(data.InstanceId);
             if (instance == null)
             {
                 return new NotFoundObjectResult("Instance not found");
             }
+
             if (instance.RuntimeStatus != OrchestrationRuntimeStatus.Running)
             {
                 return new BadRequestObjectResult("Cannot change state because instance is not running");
             }
+
             await client.RaiseEventAsync(data.InstanceId, "Approval", data);
             return new AcceptedResult();
         }
@@ -71,7 +80,7 @@ namespace FunctionApp1
             {
                 return new BadRequestObjectResult("Instance not provided");
             }
-            var instance = await client.GetInstanceAsync(instanceId, true);
+            var instance = await client.GetInstanceAsync(instanceId!, true);
             if (instance == null)
             {
                 return new NotFoundObjectResult("Instance not found");

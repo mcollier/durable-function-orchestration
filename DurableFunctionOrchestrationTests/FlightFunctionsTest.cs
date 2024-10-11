@@ -41,7 +41,7 @@ namespace DurableFunctionOrchestrationTests
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+                    .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Created));
 
             var client = new HttpClient(_mockHttpMessageHandler.Object);
             client.BaseAddress = new Uri("http://localhost/");
@@ -57,7 +57,7 @@ namespace DurableFunctionOrchestrationTests
 
             // Assert
             Assert.IsNotNull(result);
-            Assert.IsInstanceOfType<FlightReservationRequest>(result);
+            Assert.IsInstanceOfType<FlightReservationResult>(result);
         }
     }
 }

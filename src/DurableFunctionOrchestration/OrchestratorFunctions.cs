@@ -32,26 +32,33 @@ namespace FunctionApp1
             });
 
             try
-            { 
+            {
                 var hotelReservationResult = await context.CallActivityAsync<HotelReservationResult>(nameof(HotelFunctions.RegistrationAsync), userId);
-            
-                if(hotelReservationResult.Status == "FAIL") {
+
+                if (hotelReservationResult.Status == "FAIL")
+                {
                     return "FAIL";
                 }
 
                 var flightReservationResult = await context.CallActivityAsync<FlightReservationResult>(nameof(FlightFunctions.FlightRegistrationAsync), userId);
-            
-                if(flightReservationResult.Status == "FAIL") {
+
+                if (flightReservationResult.Status == "FAIL")
+                {
                     var cancelResponse = await context.CallActivityAsync<string>(nameof(HotelFunctions.CancelHotelReservationAsync), hotelReservationResult.Reservation?.Id);
 
                     return "FAIL";
+                }
+
+                if (hotelReservationResult.Reservation == null || flightReservationResult.Reservation == null)
+                {
+                    throw new InvalidOperationException("Reservation details cannot be null.");
                 }
 
                 var confirmationRequest = GetConfirmationRequest(hotelReservationResult.Reservation, flightReservationResult.Reservation);
 
                 var confirmationState = await context.CallActivityAsync<string>(
                     nameof(ConfirmationFunctions.ConfirmationAsync), confirmationRequest);
-                
+
                 if (confirmationState.Contains("fail", StringComparison.OrdinalIgnoreCase))
                 {
                     context.SetCustomStatus("Pending approval for cancellation");
@@ -61,7 +68,7 @@ namespace FunctionApp1
                     {
                         var flightCancelResponse = await context.CallActivityAsync<string>(nameof(FlightFunctions.CancelFlightReservationAsync), flightReservationResult.Reservation?.Id);
                         var hotelCancelResponse = await context.CallActivityAsync<string>(nameof(HotelFunctions.CancelHotelReservationAsync), hotelReservationResult.Reservation?.Id);
-                        
+
                         return "The flight and hotel were cancelled";
                     }
                     return "The flight was NOT cancelled";
@@ -72,6 +79,8 @@ namespace FunctionApp1
             }
             catch (TaskFailedException e)
             {
+                // TODO: Create a more descriptive error message.
+                logger.LogError(e, "An error occurred.");
                 return "FAIL";
             }
         }
