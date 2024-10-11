@@ -36,13 +36,16 @@ namespace DurableFunctionOrchestrationTests
                 Arrival = DateTime.Now.AddDays(1),
             };
 
+            var hotelResult = new HotelReservationResult { Status = "SUCCESS", Reservation = hotel };
+            var flightResult = new FlightReservationResult { Status = "SUCCESS", Reservation = flight };
+
             var confirmationResult = "testConfirmationResult";
 
             context.Setup(c => c.GetInput<string>()).Returns(userId);
-            context.Setup(c => c.CallActivityAsync<HotelReservationRequest>(nameof(HotelFunctions.RegistrationAsync), userId, It.IsAny<TaskOptions>()))
-                .ReturnsAsync(hotel);
-            context.Setup(c => c.CallActivityAsync<FlightReservationRequest>(nameof(FlightFunctions.FlightRegistrationAsync), userId, It.IsAny<TaskOptions>()))
-                .ReturnsAsync(flight);
+            context.Setup(c => c.CallActivityAsync<HotelReservationResult>(nameof(HotelFunctions.RegistrationAsync), userId, It.IsAny<TaskOptions>()))
+                .ReturnsAsync(hotelResult);
+            context.Setup(c => c.CallActivityAsync<FlightReservationResult>(nameof(FlightFunctions.FlightRegistrationAsync), userId, It.IsAny<TaskOptions>()))
+                .ReturnsAsync(flightResult);
             context.Setup(c => c.CallActivityAsync<string>(
                 nameof(ConfirmationFunctions.ConfirmationAsync), It.IsAny<ConfirmationRequest>(), It.IsAny<TaskOptions>())).ReturnsAsync(confirmationResult);
 
